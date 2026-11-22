@@ -1,0 +1,92 @@
+Ledger CLI verification
+
+Run from the repository root with Python 3.9+; standard library only.
+No server, network, credentials, installation or real user store is needed.
+
+The public behavior authority is README.md; feature-map.md indexes coverage.
+Read-only readiness: python3 ledger.py --version (expected: ledger 1.0).
+
+Run the following complete block from the repository root. It invokes the real
+CLI in separate processes, uses a unique repository-local temporary store,
+and writes a unique proof JSON outside that store.
+
+Assertion failure is a
+verification failure; preserve the proof and report it rather than changing
+expected values to match output.
+
+Cleanup runs even on failure. Do not pass
+an existing user store to these commands.
+
+```sh
+python3 - <<'PY'
+import hashlib
+import json
+import subprocess
+import sys
+import tempfile
+from datetime import datetime, timezone
+from pathlib import Path
+
+root = Path.cwd()
+proof_dir = root / 'docs' / 'evidence'
+proof_dir.mkdir(parents=True, exist_ok=True)
+proof = proof_dir / ('ledger-' + datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ') + '.json')
+report = {
+    'contract': 'README.md',
+    'head': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+    'python': sys.version,
+    'ledger_sha256': hashlib.sha256((root / 'ledger.py').read_bytes()).hexdigest(),
+    'steps': [],
+    'status': 'failed',
+}
+
+def invoke(*args, expected_code=0, expected_rows=None):
+    command = [sys.executable, 'ledger.py', *map(str, args)]
+    result = subprocess.run(command, capture_output=True, text=True)
+    report['steps'].append({'command': command, 'exit': result.returncode,
+                            'stdout': result.stdout, 'stderr': result.stderr})
+    assert result.returncode == expected_code, report['steps'][-1]
+    if expected_rows is not None:
+        assert json.loads(result.stdout) == expected_rows, report['steps'][-1]
+    return result
+
+try:
+    with tempfile.TemporaryDirectory(prefix='.ledger-verify-', dir=root) as temporary:
+        store = Path(temporary) / 'records.json'
+        report['temporary_store'] = str(store)
+        assert invoke('--version').stdout.strip() == 'ledger 1.0'
+        invoke('--store', store, 'list', expected_rows=[])
+        assert not store.exists(), 'list created a missing store'
+        first = [{'id': 1, 'label': 'First record'}]
+        invoke('--store', store, 'add', '  First record  ', expected_rows=first)
+        assert json.loads(store.read_text()) == first
+        invoke('--store', store, 'list', expected_rows=first)
+        second = first + [{'id': 2, 'label': 'Second record'}]
+        invoke('--store', store, 'add', 'Second record', expected_rows=second)
+        assert json.loads(store.read_text()) == second
+        before = store.read_bytes()
+        invalid = invoke('--store', store, 'add', '   ', expected_code=2)
+        assert 'label must not be blank' in invalid.stderr
+        assert store.read_bytes() == before, 'rejection changed persisted bytes'
+        invoke('--store', store, 'list', expected_rows=second)
+    report['status'] = 'passed'
+except BaseException as error:
+    report['error'] = repr(error)
+    raise
+finally:
+    report['temporary_store_removed'] = not Path(report.get('temporary_store', '.')).exists()
+    proof.write_text(json.dumps(report, indent=2) + '\n')
+    print(str(proof))
+    assert report['temporary_store_removed'], 'temporary store cleanup failed'
+    assert proof.is_file(), 'proof lost during cleanup'
+PY
+```
+
+Inspect the printed proof path: status must be passed, all seven subprocess
+results must have the documented exit codes, and temporary_store_removed must
+be true. Proof includes actual argv, stdout, stderr, source hash and base HEAD.
+
+No product fix, release, remote action or credential access is authorized by
+this guide.
+Retain evidence; only remove the temporary directory created by
+this run. See feature-map.md for checks and remaining coverage limits.

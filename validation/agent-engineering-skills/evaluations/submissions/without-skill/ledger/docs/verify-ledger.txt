@@ -1,0 +1,102 @@
+Ledger CLI verification guide
+
+Scope and authority
+Run from the repository root with Python 3.9+ and no network or credentials.
+README.md owns the CLI contract. This existing entry owns the repeatable
+verification procedure.
+
+Do not change ledger.py to make verification pass.
+
+Run
+
+Paste the entire command below into a POSIX shell. Each CLI invocation is a
+separate process.
+
+Expected records are literal examples from the README
+contract, not values derived from product output.
+
+The temporary store is unique
+and removed on success or failure; evidence is kept separately in evidence/.
+
+A failed assertion exits nonzero: inspect the log, fix the underlying issue,
+and rerun.
+
+Never report PASS from an incomplete run or edit expected results
+merely to match observed output.
+
+```sh
+python3 - <<'PY'
+import json
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+from datetime import datetime, timezone
+
+stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
+proof = Path('evidence') / ('ledger-' + stamp + '.log')
+proof.parent.mkdir(exist_ok=True)
+with proof.open('w') as log:
+    def record(message):
+        print(message)
+        print(message, file=log, flush=True)
+
+    def invoke(*args, status=0, expected=None):
+        command = [sys.executable, 'ledger.py', *args]
+        result = subprocess.run(command, capture_output=True, text=True)
+        record(json.dumps({'argv': command, 'status': result.returncode,
+                           'stdout': result.stdout, 'stderr': result.stderr}))
+        assert result.returncode == status, 'unexpected exit status'
+        if expected is not None:
+            assert json.loads(result.stdout) == expected, 'unexpected records'
+        return result
+
+    record('Python: ' + sys.version)
+    record('Contract: README.md; store removed by TemporaryDirectory')
+    try:
+        version = invoke('--version')
+        assert version.stdout.strip() == 'ledger 1.0'
+        with tempfile.TemporaryDirectory(prefix='cedar-ledger-') as directory:
+            store = Path(directory) / 'isolated.json'
+            args = ('--store', str(store))
+            invoke(*args, 'list', expected=[])
+            assert not store.exists(), 'list created missing store'
+            invoke(*args, 'add', '   ', status=2)
+            assert not store.exists(), 'blank add created store'
+            first = [{'id': 1, 'label': 'oak'}]
+            invoke(*args, 'add', '  oak  ', expected=first)
+            assert json.loads(store.read_text()) == first
+            invoke(*args, 'list', expected=first)
+            before = store.read_bytes()
+            invoke(*args, 'add', ' \t ', status=2)
+            assert store.read_bytes() == before, 'blank add changed store'
+            second = [{'id': 1, 'label': 'oak'}, {'id': 2, 'label': 'pine'}]
+            invoke(*args, 'add', 'pine', expected=second)
+            assert json.loads(store.read_text()) == second
+            invoke(*args, 'list', expected=second)
+        assert not Path(directory).exists(), 'temporary store cleanup failed'
+        record('PASS: version, missing store, trim, sequential IDs, persistence, '
+               'blank rejection without mutation, and cleanup')
+    except BaseException as error:
+        record('FAIL: ' + repr(error))
+        raise
+print('Evidence: ' + str(proof))
+PY
+```
+
+Review
+
+Inspect the timestamped log for argv, exit status, stdout, stderr and final
+PASS/FAIL.
+
+A list invocation after each add verifies cross-process persistence;
+file reads also verify the persisted objects.
+
+Blank labels are tested against
+both a missing and existing store, with byte-for-byte preservation for the latter.
+
+The scope is the documented happy path and blank-label contract; malformed JSON,
+concurrent writers and unrelated parser cases are not certified by this run.
+
+Keep logs as historical evidence; rerun after relevant changes. Check git diff
+before committing so only intended documentation and evidence are included.

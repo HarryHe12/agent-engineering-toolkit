@@ -1,0 +1,120 @@
+Alder Ledger CLI contract verification
+
+Scope and authority
+
+Run from the repository root with Python 3.9+ (standard library only). No service,
+network, credentials or installation is needed.
+
+README.md owns the behavior
+contract; this entry owns the verification procedure. Do not use a real store.
+
+
+The --version command is the read-only readiness check (expected: ledger 1.0).
+
+Coverage
+
+The procedure below checks version, missing-store list, whitespace trimming,
+sequential IDs, full-list add output, JSON persistence across separate CLI
+processes, and blank-label rejection with status 2 and byte-identical storage.
+
+
+It also checks blank input against a missing store does not create that store.
+
+
+Malformed JSON, concurrent writers and filesystem permission errors are outside
+this documented contract and are not certified by this run.
+
+Run and evidence
+
+Copy the complete Python block below into a shell at the repository root. It
+creates a unique store directory inside the repository and removes it in finally.
+
+
+Evidence is kept separately under evidence/ledger-<unique-id>/run.json, including
+commands, exit codes, stdout, stderr, independent expectations and cleanup state.
+
+
+A successful shell exit and passed=true certify only the listed checks. A failed
+assertion exits nonzero; inspect the retained transcript and error, do not adjust
+expectations to fit observed output.
+
+Review evidence for accidental sensitive
+content before committing it.
+
+Retain only this run's evidence when requested.
+
+```sh
+python3 - <<'PY'
+import json
+import shutil
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+root = Path.cwd()
+proof = Path(tempfile.mkdtemp(prefix='ledger-', dir=root / 'evidence'))
+store_dir = Path(tempfile.mkdtemp(prefix='.ledger-verify-', dir=root))
+store = store_dir / 'store.json'
+report = {'contract': 'README.md', 'commands': [], 'checks': [], 'passed': False}
+
+def invoke(*args):
+    command = [sys.executable, 'ledger.py', *args]
+    result = subprocess.run(command, text=True, capture_output=True)
+    report['commands'].append(dict(command=command, exit_code=result.returncode,
+                                   stdout=result.stdout, stderr=result.stderr))
+    return result
+
+def check(name, condition, expected):
+    report['checks'].append(dict(name=name, passed=bool(condition), expected=expected))
+    if not condition:
+        raise AssertionError(name)
+
+try:
+    result = invoke('--version')
+    check('readiness', result.returncode == 0 and result.stdout.strip() == 'ledger 1.0',
+          'status 0; ledger 1.0')
+    result = invoke('--store', str(store), 'list')
+    check('missing store', result.returncode == 0 and json.loads(result.stdout) == []
+          and not store.exists(), 'status 0; []; store remains absent')
+    expected = [{'id': 1, 'label': 'first'}]
+    result = invoke('--store', str(store), 'add', '  first  ')
+    check('trim and first ID', result.returncode == 0 and json.loads(result.stdout) == expected
+          and json.loads(store.read_text()) == expected, expected.copy())
+    expected.append({'id': 2, 'label': 'second'})
+    result = invoke('--store', str(store), 'add', 'second')
+    check('second ID and full list', result.returncode == 0
+          and json.loads(result.stdout) == expected, expected.copy())
+    result = invoke('--store', str(store), 'list')
+    check('later process persistence', result.returncode == 0
+          and json.loads(result.stdout) == expected
+          and json.loads(store.read_text()) == expected, expected.copy())
+    before = store.read_bytes()
+    result = invoke('--store', str(store), 'add', '   ')
+    check('blank label preserves bytes', result.returncode == 2 and store.read_bytes() == before,
+          'status 2; store bytes unchanged')
+    absent = store_dir / 'absent.json'
+    result = invoke('--store', str(absent), 'add', '')
+    check('blank label creates no store', result.returncode == 2 and not absent.exists(),
+          'status 2; absent store stays absent')
+    report['passed'] = True
+except Exception as exc:
+    report['error'] = repr(exc)
+    raise
+finally:
+    shutil.rmtree(store_dir)
+    report['cleanup'] = {'store_directory': str(store_dir), 'removed': not store_dir.exists()}
+    (proof / 'run.json').write_text(json.dumps(report, indent=2) + '\n')
+    print('Evidence:', proof / 'run.json')
+PY
+```
+
+Before running, create the evidence parent with mkdir -p evidence if absent.
+
+
+After running, inspect run.json: passed and cleanup.removed must both be true,
+and the file must still exist after store cleanup.
+
+Missing evidence or an
+interrupted cleanup is incomplete verification; inspect and remove only the
+recorded temporary directory, then rerun. Do not erase other runs or user data.

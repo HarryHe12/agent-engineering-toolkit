@@ -1,0 +1,57 @@
+{
+  "cedar-ledger": {
+    "files": 4,
+    "added_lines": 286,
+    "removed_lines": 3
+  },
+  "willow-ledger": {
+    "files": 16,
+    "added_lines": 619,
+    "removed_lines": 5
+  },
+  "juniper-panel": {
+    "files": 6,
+    "added_lines": 142,
+    "removed_lines": 7
+  },
+  "birch-panel": {
+    "files": 4,
+    "added_lines": 124,
+    "removed_lines": 5
+  },
+  "hazel-notes": {
+    "files": 1,
+    "added_lines": 25,
+    "removed_lines": 0
+  },
+  "aspen-notes": {
+    "files": 1,
+    "added_lines": 27,
+    "removed_lines": 0
+  },
+  "larch-docs": {
+    "files": 1,
+    "added_lines": 1,
+    "removed_lines": 1
+  },
+  "elm-docs": {
+    "files": 1,
+    "added_lines": 1,
+    "removed_lines": 1
+  },
+  "alder-ledger": {
+    "files": 9,
+    "added_lines": 533,
+    "removed_lines": 3
+  },
+  "maple-panel": {
+    "files": 5,
+    "added_lines": 139,
+    "removed_lines": 7
+  },
+  "rowan-notes": {
+    "files": 1,
+    "added_lines": 22,
+    "removed_lines": 0
+  }
+}

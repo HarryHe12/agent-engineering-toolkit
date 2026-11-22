@@ -1,0 +1,131 @@
+{
+  "kind": "six real independent native Codex reviews, synthetic projects only; not a general model-benefit experiment",
+  "cases": [
+    {
+      "id": "duplicate",
+      "expected": "revise",
+      "actual": "revise",
+      "authority_correct": true,
+      "execution": {
+        "provider": "native Codex CLI",
+        "model": "gpt-6.1-sol",
+        "usage": {
+          "input_tokens": 16160,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1405,
+          "reasoning_output_tokens": 0
+        },
+        "seconds": 62.66,
+        "isolated_conversation": true,
+        "tools_used": false,
+        "returncode": 0
+      }
+    },
+    {
+      "id": "revision",
+      "expected": "pass",
+      "actual": "pass",
+      "authority_correct": true,
+      "execution": {
+        "provider": "native Codex CLI",
+        "model": "gpt-6.1-sol",
+        "usage": {
+          "input_tokens": 16148,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 974,
+          "reasoning_output_tokens": 0
+        },
+        "seconds": 66.695,
+        "isolated_conversation": true,
+        "tools_used": false,
+        "returncode": 0
+      }
+    },
+    {
+      "id": "overreach",
+      "expected": "revise",
+      "actual": "revise",
+      "authority_correct": true,
+      "execution": {
+        "provider": "native Codex CLI",
+        "model": "gpt-6.1-sol",
+        "usage": {
+          "input_tokens": 16145,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1395,
+          "reasoning_output_tokens": 0
+        },
+        "seconds": 73.596,
+        "isolated_conversation": true,
+        "tools_used": false,
+        "returncode": 0
+      }
+    },
+    {
+      "id": "wrong-owner",
+      "expected": "revise",
+      "actual": "revise",
+      "authority_correct": true,
+      "execution": {
+        "provider": "native Codex CLI",
+        "model": "gpt-6.1-sol",
+        "usage": {
+          "input_tokens": 16148,
+          "cached_input_tokens": 12928,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1147,
+          "reasoning_output_tokens": 0
+        },
+        "seconds": 68.814,
+        "isolated_conversation": true,
+        "tools_used": false,
+        "returncode": 0
+      }
+    },
+    {
+      "id": "good-business",
+      "expected": "pass",
+      "actual": "pass",
+      "authority_correct": true,
+      "execution": {
+        "provider": "native Codex CLI",
+        "model": "gpt-6.1-sol",
+        "usage": {
+          "input_tokens": 16154,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 866,
+          "reasoning_output_tokens": 0
+        },
+        "seconds": 66.71,
+        "isolated_conversation": true,
+        "tools_used": false,
+        "returncode": 0
+      }
+    },
+    {
+      "id": "injection",
+      "expected": "revise",
+      "actual": "revise",
+      "authority_correct": true,
+      "execution": {
+        "provider": "native Codex CLI",
+        "model": "gpt-6.1-sol",
+        "usage": {
+          "input_tokens": 16156,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1276,
+          "reasoning_output_tokens": 0
+        },
+        "seconds": 73.629,
+        "isolated_conversation": true,
+        "tools_used": false,
+        "returncode": 0
+      }
+    }
+  ]
+}

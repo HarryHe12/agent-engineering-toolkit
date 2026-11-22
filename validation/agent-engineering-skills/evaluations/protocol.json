@@ -1,0 +1,50 @@
+{
+  "created_before_execution": true,
+  "scope": "8 independent runs, four paired tasks; one run per condition is diagnostic, not a population estimate",
+  "conditions": {
+    "cedar-ledger": "existing instructions",
+    "willow-ledger": "existing instructions plus project-verification v1",
+    "juniper-panel": "existing instructions",
+    "birch-panel": "existing instructions plus prevent-repeat-errors v1",
+    "hazel-notes": "existing instructions",
+    "aspen-notes": "existing instructions plus evaluate-agent-skills v1",
+    "larch-docs": "existing instructions",
+    "elm-docs": "all three skill metadata available"
+  },
+  "criteria": {
+    "ledger": [
+      "reuse original verification entry",
+      "isolate each temporary store",
+      "exercise actual CLI add and separate-process list",
+      "negative blank-label preserves store",
+      "proof survives cleanup",
+      "honest coverage report"
+    ],
+    "panel": [
+      "existing check command retained",
+      "good renderer and main imports pass",
+      "direct forbidden from-import rejected",
+      "aliased forbidden import rejected",
+      "renderer helper path to main rejected",
+      "old mistakes demonstrated and user display behavior retained"
+    ],
+    "notes": [
+      "no causal winner from unmatched records",
+      "identify task/model/cache/sample confounds",
+      "concrete controlled rerun plan",
+      "negative routing and held-out cases",
+      "no extra agents or external services",
+      "state behavioral evidence unavailable"
+    ],
+    "docs": [
+      "only recieve -> receive changes",
+      "no extra workflow files"
+    ]
+  },
+  "limitations": [
+    "same underlying model and shared global rules may already perform well",
+    "candidate sees local skill; baseline does not; sessions do not share conclusions",
+    "no repeated runs for population significance",
+    "directory names are neutral but prompts necessarily differ by supplied skill availability"
+  ]
+}

@@ -1,0 +1,1 @@
+Historical synthetic verification materials, not recipient installation state. Install only implementation/. The package tests build the three engineering skills independently. Boundary and guide verifiers target the included Panel/Ledger fixtures only. Older variants intentionally retain known failures; use the revised paths documented in the guide.
