@@ -100,8 +100,8 @@ function jsMetrics(source, file) {
   return out;
 }
 const request = JSON.parse(fs.readFileSync(0,'utf8'));
-retired = policies.retiredModules.filter(item=>path.resolve(item.root) === path.resolve(request.root)).map(item=>({
-  ...item, resolved: item.module.startsWith('.') ? path.resolve(item.root,item.module).replace(/\.(?:[cm]?js|[cm]?ts|tsx|jsx)$/,'') : item.module
+retired = policies.retiredModules.filter(item=>path.resolve(item.root) === path.resolve(request.policyRoot || request.root)).map(item=>({
+  ...item, resolved: item.module.startsWith('.') ? path.resolve(request.root,item.module).replace(/\.(?:[cm]?js|[cm]?ts|tsx|jsx)$/,'') : item.module
 }));
 const previous = request.previous || {};
 const result = {};
@@ -124,10 +124,12 @@ for (const file of files(request.root,request.delegatedRoots)) {
   } else metrics = {'guard:unsupported': {value:1,count:1,line:1,message:'No checker installed for this language. Add and validate an adapter before claiming completion.'}};
   result[relative] = {hash, metrics};
 }
-const {spawnSync: scanDocuments} = await import('node:child_process');
-const documentScan = scanDocuments(pythonInterpreter,[path.join(markdownHome,'md_gate.py')], {
-  input:JSON.stringify({root:request.root,previous}),encoding:'utf8',maxBuffer:32*1024*1024,
-});
-if (documentScan.status !== 0) throw new Error('Instruction checker failed: '+documentScan.stderr);
-Object.assign(result,JSON.parse(documentScan.stdout));
+if (!request.sourceOnly) {
+  const {spawnSync: scanDocuments} = await import('node:child_process');
+  const documentScan = scanDocuments(pythonInterpreter,[path.join(markdownHome,'md_gate.py')], {
+    input:JSON.stringify({root:request.root,previous}),encoding:'utf8',maxBuffer:32*1024*1024,
+  });
+  if (documentScan.status !== 0) throw new Error('Instruction checker failed: '+documentScan.stderr);
+  Object.assign(result,JSON.parse(documentScan.stdout));
+}
 process.stdout.write(JSON.stringify(result));

@@ -1,17 +1,16 @@
 # Agent Engineering Toolkit
 
-一套可独立采用的 Codex 工程方法，覆盖本地代码检查、指令治理、产品验证、重复错误预防和 Skill 评估。仓库包含参考实现、安装指南和可复验样例。
+当前版本 `2026.11.23-p2`。在 Codex、Claude Code、Gemini CLI 或其他 Agent 上安装质量门禁与工程 Skills。P2 增加可执行的文档示例、回归测试和代表性错误验收。
 
-| 方法 | 适用场景 |
+- [下载 ZIP 安装包](https://raw.githubusercontent.com/HarryHe12/agent-engineering-toolkit/v2026.11.23-p2/releases/2026.11.23-p2/Codex-Agent-Toolkit.zip)
+- [快速开始](guides/quickstart.md)包含下载、安装、回滚和完整跑通示例的命令。
+- [版本源码](archive/2026.11.23-p2/)与 ZIP 内的文件逐一匹配。
+- [发布验收记录](https://github.com/HarryHe12/agent-engineering-toolkit/actions/workflows/public-install.yml)
+
+| 工程方法 | 入口 |
 | --- | --- |
-| [本地代码门禁](implementation/skills/local-code-guard/SKILL.md) | 对代码变更执行检查，基于恢复点识别新增或恶化的问题 |
-| [指令维护与独立审查](implementation/skills/instruction-maintenance/SKILL.md) | 维护 AGENTS.md、Skill 和业务规则，检查草稿并独立审查语义 |
-| [项目运行验证](implementation/skills/project-verification/SKILL.md) | 从正常入口运行产品、验证关键路径并保留证据 |
-| [重复错误预防](implementation/skills/prevent-repeat-errors/SKILL.md) | 把已证实的重复问题转化为结构约束或可执行检查 |
-| [Skill 效果评估](implementation/skills/evaluate-agent-skills/SKILL.md) | 用同条件对照衡量质量、成本和适用范围 |
-
-## 安装与验证
-
-按[异机迁移实施指南](guides/Codex-异机迁移实施指南.md)安装所需组件。源码可以直接从本仓库的 `implementation/` 获取。独立审查使用接收方已有的 Codex CLI 登录。
-
-[验证材料](validation/README.txt)包含合成任务、评估协议和复验入口。门禁测试验证检查与拦截行为，独立审查的历史验收记录对应当时测试的环境。
+| 本地代码门禁 | [代码检查与任务收尾](archive/2026.11.23-p2/implementation/skills/local-code-guard/SKILL.md) |
+| 指令维护 | [草稿检查与独立审查](archive/2026.11.23-p2/implementation/skills/instruction-maintenance/SKILL.md) |
+| 项目验证 | [从正常入口运行项目](archive/2026.11.23-p2/implementation/skills/project-verification/SKILL.md) |
+| 重复错误预防 | [将已知问题转化为可执行检查](archive/2026.11.23-p2/implementation/skills/prevent-repeat-errors/SKILL.md) |
+| Skill 评估 | [使用同条件对照评估效果](archive/2026.11.23-p2/implementation/skills/evaluate-agent-skills/SKILL.md) |

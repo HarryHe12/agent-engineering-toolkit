@@ -28,12 +28,13 @@ def main():
     parser.add_argument('--target',required=True); parser.add_argument('--draft',required=True)
     parser.add_argument('--review'); parser.add_argument('--request')
     parser.add_argument('--evidence',action='append',default=[])
+    parser.add_argument('--retry', action='store_true', help='Retry an unavailable review after taking corrective action.')
     args=parser.parse_args(); target=Path(args.target).absolute(); draft=Path(args.draft)
     if args.action=='analyze': result=analyze(target,draft)[2]
     elif args.action=='review':
         from md_semantic import run
         if not args.request: raise ValueError('--request must name the concrete source/request text file.')
-        result=run(target,draft,Path(args.request),args.evidence)
+        result=run(target,draft,Path(args.request),args.evidence,args.retry)
     else:
         from md_store import STATE
         if not args.review: raise ValueError('--review must name an independent reviewer credential.')

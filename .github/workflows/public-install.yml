@@ -1,0 +1,28 @@
+name: Public installation smoke test
+
+'on':
+  push:
+    tags: ['v2026.11.23-p2']
+
+permissions:
+  contents: read
+
+jobs:
+  public-install:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Set up Node 24
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Download and verify the published installation
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=https://raw.githubusercontent.com/HarryHe12/agent-engineering-toolkit/v2026.11.23-p2
+          curl --retry 5 --retry-all-errors -fsSLO "$base/releases/2026.11.23-p2/Codex-Agent-Toolkit.zip"
+          curl --retry 5 --retry-all-errors -fsSLO "$base/releases/2026.11.23-p2/delivery-manifest.json"
+          curl --retry 5 --retry-all-errors -fsSLO "$base/validation/public_install_smoke.py"
+          python3 public_install_smoke.py --archive Codex-Agent-Toolkit.zip --manifest delivery-manifest.json

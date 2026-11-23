@@ -1,9 +1,70 @@
 #!/usr/bin/python3
 """Local synchronous Codex gates. Store hashes/diagnostics, never source contents."""
 import fcntl,shutil,hashlib,json,os,pathlib,re,subprocess,sys,tempfile
+from pathlib import Path
+import shlex
+
 BASE=pathlib.Path(__file__).resolve().parent
 NODE=os.environ.get('CODEX_GUARD_NODE') or shutil.which('node')
 STATE=BASE/'state'
+SOURCE_EXTENSIONS = set('js cjs mjs jsx ts cts mts tsx py vue svelte go rs java kt swift c cc cpp h cs rb php sh bash zsh sql wxml wxss css scss html'.split())
+
+class ScannerDependencyError(RuntimeError):
+    """A missing scanner dependency that can be installed and retried."""
+
+
+RESUME = (
+    'If you are authorized to install dependencies, install them and rerun the '
+    'same verification. Otherwise show the user the missing dependencies and '
+    'install instructions below, then ask them to reply "继续" in this chat '
+    'after installation. Retry the failed step and resume the current task. '
+    'Verification is incomplete until the retry passes.'
+)
+
+
+def check_dependencies(base, node):
+    if not node or not shutil.which(node):
+        raise ScannerDependencyError(
+            f'Node.js is missing or not executable ({node or "node"}). Install '
+            'Node.js 24 LTS with npm, then make node available to the hook '
+            'or set CODEX_GUARD_NODE to its absolute executable path.\n' + RESUME
+        )
+    manifest = base / 'package.json'
+    if not manifest.is_file():
+        return
+    packages = json.loads(manifest.read_text())['dependencies']
+    missing = [
+        name for name in packages
+        if not (base / 'node_modules' / name / 'package.json').is_file()
+    ]
+    if missing:
+        raise package_error(base, node, ', '.join(missing))
+
+
+def package_error(base, node, missing):
+    node_directory = Path(shutil.which(node)).parent
+    npm = shutil.which('npm', path=str(node_directory))
+    npm = npm or shutil.which('npm')
+    if not npm:
+        setup = 'Install npm with Node.js 24 LTS and make both available on PATH, then run'
+        command = 'npm'
+    else:
+        setup = 'Run'
+        command = f'PATH={shlex.quote(os.fspath(node_directory))}:"$PATH" {shlex.quote(npm)}'
+    return ScannerDependencyError(
+        f'Missing code guard package(s): {missing}. {setup}:\n'
+        f'cd {shlex.quote(os.fspath(base))} && {command} ci '
+        '--omit=optional --ignore-scripts --no-audit --no-fund\n' + RESUME
+    )
+
+
+def raise_scan_error(base, node, stderr):
+    if 'ERR_MODULE_NOT_FOUND' in stderr or 'MODULE_NOT_FOUND' in stderr:
+        missing = re.search(r"Cannot find (?:package|module) ['\"]([^'\"]+)", stderr)
+        if missing:
+            raise package_error(base, node, missing.group(1))
+    raise RuntimeError(stderr[-3000:])
+
 def verify_integrity():
     manifest=BASE/'integrity.json'
     if not manifest.exists(): return
@@ -11,21 +72,21 @@ def verify_integrity():
         target=pathlib.Path(name)
         if not target.exists() or hashlib.sha256(target.read_bytes()).hexdigest()!=expected:
             raise RuntimeError('Guard installation changed: '+name+'. Restore the verified version or perform explicitly authorized guard maintenance.')
-def run_scan(root,previous,delegated_roots=()):
-    if not NODE: raise RuntimeError('Node executable missing; configure CODEX_GUARD_NODE.')
+def run_scan(root,previous,delegated_roots=(),*,policy_root=None,source_only=False):
+    check_dependencies(BASE, NODE)
     env=dict(os.environ)
     env.setdefault('CODEX_HOME',str(BASE.parent))
     env.setdefault('CODEX_GUARD_PYTHON',sys.executable)
     env.setdefault('CODEX_GUARD_MD_HOME',str(BASE.parent/'md-governance'))
-    p=subprocess.run([NODE,str(BASE/'scan.mjs')],input=json.dumps({'root':str(root),'previous':previous,'delegatedRoots':list(delegated_roots)}),text=True,capture_output=True,timeout=90,env=env)
-    if p.returncode: raise RuntimeError(p.stderr[-3000:])
+    p=subprocess.run([NODE,str(BASE/'scan.mjs')],input=json.dumps({'root':str(root),'previous':previous,'delegatedRoots':list(delegated_roots),'policyRoot':str(policy_root or root),'sourceOnly':source_only}),text=True,capture_output=True,timeout=90,env=env)
+    if p.returncode: raise_scan_error(BASE, NODE, p.stderr)
     result=json.loads(p.stdout)
     validate_scan(root,result,delegated_roots)
     return result
 
 def expected_sources(root,delegated_roots):
     ignored={'.git','node_modules','__pycache__','.venv','venv','state'}
-    extensions=set('js cjs mjs jsx ts cts mts tsx py vue svelte go rs java kt swift c cc cpp h cs rb php sh bash zsh sql wxml wxss css scss html'.split())
+    extensions=SOURCE_EXTENSIONS
     delegated={str(pathlib.Path(p).resolve()) for p in delegated_roots}
     expected=set()
     def walk(directory):
