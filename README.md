@@ -5,7 +5,7 @@
 - [下载 ZIP 安装包](https://raw.githubusercontent.com/HarryHe12/agent-engineering-toolkit/v2026.11.23-p2/releases/2026.11.23-p2/Codex-Agent-Toolkit.zip)
 - [快速开始](guides/quickstart.md)包含下载、安装、回滚和完整跑通示例的命令。
 - [版本源码](archive/2026.11.23-p2/)与 ZIP 内的文件逐一匹配。
-- [发布验收记录](https://github.com/HarryHe12/agent-engineering-toolkit/actions/workflows/public-install.yml)
+- [发布验收记录](https://github.com/HarryHe12/agent-engineering-toolkit/actions/workflows/public-install.yml)。仓库维护者可在同一页面手动复验该版本。
 
 | 工程方法 | 入口 |
 | --- | --- |

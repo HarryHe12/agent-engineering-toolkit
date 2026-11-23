@@ -2,7 +2,10 @@ name: Public installation smoke test
 
 'on':
   push:
+    branches: [main]
+    paths: ['.github/workflows/public-install.yml']
     tags: ['v2026.11.23-p2']
+  workflow_dispatch:
 
 permissions:
   contents: read
